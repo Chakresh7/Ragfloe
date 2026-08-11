@@ -1,0 +1,13 @@
+sqlalchemy
+psycopg[binary]
+alembic
+supabase
+fastapi
+uvicorn[standard]
+pydantic-settings
+PyJWT[crypto]
+cryptography
+python-dotenv
+httpx
+pytest
+pytest-asyncio
