@@ -68,11 +68,21 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def cors_origins(self) -> list[str]:
-        return [
+        configured = [
             part.strip()
             for part in self.cors_origins_raw.split(",")
             if part.strip()
-        ] or ["http://localhost:3000"]
+        ]
+        # Local Next.js is often opened as localhost OR 127.0.0.1; both must work.
+        defaults = [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ]
+        merged: list[str] = []
+        for origin in [*configured, *defaults]:
+            if origin not in merged:
+                merged.append(origin)
+        return merged
 
 
 @lru_cache

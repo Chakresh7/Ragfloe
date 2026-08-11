@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProjectCard } from "./ProjectCard";
 import { ProjectToolbar } from "./ProjectToolbar";
@@ -39,6 +39,12 @@ export function ProjectsView({
   const [error, setError] = useState<string | null>(initialError);
   const [actionError, setActionError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+
+  // Soft navigation between orgs reuses this client tree — sync server props.
+  useEffect(() => {
+    setProjects(initialProjects);
+    setError(initialError);
+  }, [organizationId, initialProjects, initialError]);
 
   const load = useCallback(async () => {
     setLoading(true);

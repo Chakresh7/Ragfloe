@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { OrgCard } from "./OrgCard";
@@ -34,6 +34,11 @@ export function OrganizationsView({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(initialError);
   const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    setOrganizations(initialOrganizations);
+    setError(initialError);
+  }, [initialOrganizations, initialError]);
 
   const load = useCallback(async () => {
     setLoading(true);

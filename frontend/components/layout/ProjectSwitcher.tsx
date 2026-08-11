@@ -37,6 +37,12 @@ export function ProjectSwitcher({
           {project.name}
         </Link>
       ))}
+      <Link
+        href={`/organizations/${organizationId}/projects`}
+        className="rf-menu-item"
+      >
+        All projects
+      </Link>
     </Dropdown>
   );
 }

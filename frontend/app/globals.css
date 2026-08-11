@@ -718,6 +718,16 @@ html[data-theme="dark"] .rf-btn-primary {
   color: var(--ink);
 }
 
+.rf-btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+
+.rf-btn-danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
 .rf-btn-icon {
   min-height: 2rem;
   width: 2rem;
@@ -864,6 +874,33 @@ html[data-theme="dark"] .rf-btn-primary {
   font-weight: 650;
   letter-spacing: -0.02em;
   margin: 0;
+}
+
+.rf-dialog-copy {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.rf-dialog-copy strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.rf-dialog-field {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.rf-dialog-field > span {
+  color: var(--ink-muted);
+}
+
+.rf-dialog-field strong {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .rf-dialog-actions {

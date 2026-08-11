@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;
@@ -12,6 +12,7 @@ const variantClass: Record<Variant, string> = {
   primary: "rf-btn-primary",
   secondary: "rf-btn-secondary",
   ghost: "rf-btn-ghost",
+  danger: "rf-btn-danger",
 };
 
 export function Button({

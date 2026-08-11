@@ -11,34 +11,41 @@ type OrgSwitcherProps = {
   currentId: string;
 };
 
+function OrgIconMark({
+  icon,
+  size = 14,
+}: {
+  icon?: Organization["icon"];
+  size?: number;
+}) {
+  const Icon = getOrgIcon(icon);
+  return <Icon size={size} strokeWidth={1.75} />;
+}
+
 export function OrgSwitcher({ organizations, currentId }: OrgSwitcherProps) {
   const current = organizations.find((org) => org.id === currentId);
-  const CurrentIcon = getOrgIcon(current?.icon);
 
   return (
     <Dropdown
       align="left"
       trigger={
         <span className="switcher-btn">
-          <CurrentIcon size={14} strokeWidth={1.75} />
+          <OrgIconMark icon={current?.icon} />
           {current?.name ?? "Organization"}
           <ChevronDown size={14} />
         </span>
       }
     >
-      {organizations.map((org) => {
-        const Icon = getOrgIcon(org.icon);
-        return (
-          <Link
-            key={org.id}
-            href={`/organizations/${org.id}/projects`}
-            className="rf-menu-item"
-          >
-            <Icon size={14} strokeWidth={1.75} />
-            {org.name}
-          </Link>
-        );
-      })}
+      {organizations.map((org) => (
+        <Link
+          key={org.id}
+          href={`/organizations/${org.id}/projects`}
+          className="rf-menu-item"
+        >
+          <OrgIconMark icon={org.icon} />
+          {org.name}
+        </Link>
+      ))}
       <Link href="/organizations" className="rf-menu-item">
         All organizations
       </Link>

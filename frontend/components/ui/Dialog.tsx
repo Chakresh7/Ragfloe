@@ -8,6 +8,7 @@ type DialogProps = {
   title: string;
   children: ReactNode;
   confirmLabel?: string;
+  confirmVariant?: "primary" | "danger";
   onClose: () => void;
   onConfirm: () => void;
   confirmDisabled?: boolean;
@@ -18,6 +19,7 @@ export function Dialog({
   title,
   children,
   confirmLabel = "Create",
+  confirmVariant = "primary",
   onClose,
   onConfirm,
   confirmDisabled = false,
@@ -54,7 +56,11 @@ export function Dialog({
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" disabled={confirmDisabled}>
+          <Button
+            type="submit"
+            variant={confirmVariant}
+            disabled={confirmDisabled}
+          >
             {confirmLabel}
           </Button>
         </div>

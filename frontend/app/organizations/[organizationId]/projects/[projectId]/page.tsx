@@ -1,58 +1,42 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ProjectOverview } from "@/components/workspace/ProjectOverview";
 import { ApiError } from "@/lib/api/client";
 import { mapProject } from "@/lib/api/mappers";
-import { getProject } from "@/lib/api/projects";
-import type { Project } from "@/lib/mock/types";
+import { serverApiFetch } from "@/lib/api/server";
+import type { ApiProject } from "@/lib/api/types";
+import { getServerAuthContext } from "@/lib/auth/server-user";
 
-export default function ProjectOverviewPage() {
-  const params = useParams<{ organizationId: string; projectId: string }>();
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [missing, setMissing] = useState(false);
+type ProjectOverviewPageProps = {
+  params: Promise<{ organizationId: string; projectId: string }>;
+};
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const row = await getProject(params.projectId);
-        if (cancelled) return;
-        if (row.organization_id !== params.organizationId) {
-          setMissing(true);
-          return;
-        }
-        setProject(mapProject(row));
-        setMissing(false);
-      } catch (err) {
-        if (cancelled) return;
-        if (err instanceof ApiError) setMissing(true);
-        else setMissing(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [params.organizationId, params.projectId]);
-
-  if (!loading && missing) {
+export default async function ProjectOverviewPage({
+  params,
+}: ProjectOverviewPageProps) {
+  const { organizationId, projectId } = await params;
+  const auth = await getServerAuthContext();
+  if (!auth) {
     notFound();
   }
 
-  if (!project) {
-    return null;
+  try {
+    const project = await serverApiFetch<ApiProject>(
+      `/api/v1/projects/${projectId}`,
+      { accessToken: auth.accessToken },
+    );
+    if (project.organization_id !== organizationId) {
+      notFound();
+    }
+    return (
+      <ProjectOverview
+        organizationId={organizationId}
+        project={mapProject(project)}
+      />
+    );
+  } catch (err) {
+    if (err instanceof ApiError && (err.status === 404 || err.status === 403)) {
+      notFound();
+    }
+    notFound();
   }
-
-  return (
-    <ProjectOverview
-      organizationId={params.organizationId}
-      project={project}
-    />
-  );
 }

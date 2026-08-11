@@ -1,130 +1,68 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams, usePathname, notFound } from "next/navigation";
-import { WorkspaceSidebar } from "@/components/workspace/WorkspaceSidebar";
-import { OrgSwitcher } from "@/components/layout/OrgSwitcher";
-import { ProjectSwitcher } from "@/components/layout/ProjectSwitcher";
-import { TopNavActions } from "@/components/layout/TopNavActions";
-import { getAvatarUrl, getDisplayName } from "@/lib/auth/user-display";
+import { notFound } from "next/navigation";
+import { WorkspaceShell } from "@/components/workspace/WorkspaceShell";
 import { ApiError } from "@/lib/api/client";
 import { mapOrganization, mapProject } from "@/lib/api/mappers";
-import { getOrganization, listOrganizations } from "@/lib/api/organizations";
-import { getProject, listProjects } from "@/lib/api/projects";
-import type { Organization, Project } from "@/lib/mock/types";
-import { createClient } from "@/lib/supabase/client";
+import { serverApiFetch } from "@/lib/api/server";
+import type { ApiOrganization, ApiProject } from "@/lib/api/types";
+import { getServerAuthContext } from "@/lib/auth/server-user";
 
-export default function WorkspaceLayout({
-  children,
-}: {
+type WorkspaceLayoutProps = {
   children: React.ReactNode;
-}) {
-  const params = useParams<{ organizationId: string; projectId: string }>();
-  const pathname = usePathname();
-  const { organizationId, projectId } = params;
+  params: Promise<{ organizationId: string; projectId: string }>;
+};
 
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [organization, setOrganization] = useState<Organization | null>(null);
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [missing, setMissing] = useState(false);
-  const [email, setEmail] = useState<string | null>(null);
-  const [name, setName] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+export default async function WorkspaceLayout({
+  children,
+  params,
+}: WorkspaceLayoutProps) {
+  const { organizationId, projectId } = await params;
+  const auth = await getServerAuthContext();
 
-  useEffect(() => {
-    const supabase = createClient();
-    void supabase.auth.getSession().then(({ data }) => {
-      const user = data.session?.user;
-      setEmail(user?.email ?? null);
-      const metadata = user?.user_metadata as Record<string, unknown> | undefined;
-      setName(getDisplayName(metadata));
-      setAvatarUrl(getAvatarUrl(metadata));
-    });
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const [org, proj, orgs, projs] = await Promise.all([
-          getOrganization(organizationId),
-          getProject(projectId),
-          listOrganizations(),
-          listProjects(organizationId),
-        ]);
-        if (cancelled) return;
-        if (proj.organization_id !== organizationId) {
-          setMissing(true);
-          return;
-        }
-        setOrganization(mapOrganization(org));
-        setProject(mapProject(proj));
-        setOrganizations(orgs.map(mapOrganization));
-        setProjects(projs.map(mapProject));
-        setMissing(false);
-      } catch (err) {
-        if (cancelled) return;
-        if (err instanceof ApiError) {
-          setMissing(true);
-        } else {
-          setMissing(true);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [organizationId, projectId]);
-
-  if (!loading && missing) {
+  if (!auth) {
     notFound();
   }
 
-  if (!organization || !project) {
+  try {
+    const token = auth.accessToken;
+    const [org, proj, orgs, projs] = await Promise.all([
+      serverApiFetch<ApiOrganization>(`/api/v1/organizations/${organizationId}`, {
+        accessToken: token,
+      }),
+      serverApiFetch<ApiProject>(`/api/v1/projects/${projectId}`, {
+        accessToken: token,
+      }),
+      serverApiFetch<ApiOrganization[]>("/api/v1/organizations", {
+        accessToken: token,
+      }),
+      serverApiFetch<ApiProject[]>(
+        `/api/v1/organizations/${organizationId}/projects`,
+        { accessToken: token },
+      ),
+    ]);
+
+    if (proj.organization_id !== organizationId) {
+      notFound();
+    }
+
     return (
-      <div className="workspace-shell">
-        <div className="workspace-main">
-          <div className="workspace-content" />
-        </div>
-      </div>
-    );
-  }
-
-  const activeSlug = pathname.endsWith(`/${projectId}`)
-    ? "overview"
-    : (pathname.split("/").pop() ?? "overview");
-
-  return (
-    <div className="workspace-shell">
-      <WorkspaceSidebar
+      <WorkspaceShell
         organizationId={organizationId}
         projectId={projectId}
-        activeSlug={activeSlug}
-      />
-      <div className="workspace-main">
-        <header className="workspace-topbar">
-          <div className="workspace-topbar-left">
-            <OrgSwitcher
-              organizations={organizations}
-              currentId={organizationId}
-            />
-            <span className="workspace-crumb">/</span>
-            <ProjectSwitcher
-              organizationId={organizationId}
-              projects={projects}
-              currentId={projectId}
-            />
-          </div>
-          <TopNavActions email={email} name={name} avatarUrl={avatarUrl} />
-        </header>
-        <div className="workspace-content">{children}</div>
-      </div>
-    </div>
-  );
+        organization={mapOrganization(org)}
+        project={mapProject(proj)}
+        organizations={orgs.map(mapOrganization)}
+        projects={projs.map(mapProject)}
+        email={auth.user.email}
+        name={auth.user.name}
+        avatarUrl={auth.user.avatarUrl}
+      >
+        {children}
+      </WorkspaceShell>
+    );
+  } catch (err) {
+    if (err instanceof ApiError && (err.status === 404 || err.status === 403)) {
+      notFound();
+    }
+    notFound();
+  }
 }
