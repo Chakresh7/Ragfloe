@@ -1,4 +1,4 @@
-# RagFloe
+﻿# RagFloe
 
 RAG-as-a-Service platform for developers.
 
@@ -8,15 +8,15 @@ RAG-as-a-Service platform for developers.
 - **Backend:** FastAPI + SQLAlchemy
 - **Database / Auth:** Supabase PostgreSQL + JWKS JWT verification
 
-## Phases in this repo
+## Phases shipped
 
-1. Project foundation and documentation
-2. Frontend authentication (Supabase OAuth)
-3. Backend authentication (JWT / JWKS + `/api/v1/me`)
-4. Organizations & projects backend (schema, RLS, APIs)
-5. Organizations & projects frontend integration
-6. OAuth account linking (Connected Accounts)
-7. Auth performance + login UX polish
+1. **Foundation** — monorepo docs and gitignore
+2. **Frontend auth** — Google/GitHub OAuth, session middleware, login UX (always-light login, no back-to-login when signed in)
+3. **Backend auth** — JWT/JWKS verification and `GET /api/v1/me`
+4. **Orgs/projects API** — schema, RLS, membership roles, FastAPI CRUD
+5. **Orgs/projects UI** — authenticated workspace wired to the API
+6. **Account linking** — Settings → Connected Accounts (`linkIdentity` / no silent merge)
+7. **Ops notes** — this README quick start
 
 ## Quick start
 
